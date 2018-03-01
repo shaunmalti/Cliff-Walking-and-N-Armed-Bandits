@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 class Mouse():
     def __init__(self):
         # self.estimation = np.zeros(shape=(4,12,4), dtype= float)
-        self.pos = [0,3]
+        self.pos = [3,0]
         self.actionvalues = np.zeros(shape=(4,4,12),dtype = float)
 
 def initialise_rewards(environment):
@@ -37,12 +37,14 @@ def Qlearning(mouse, ending_pos, epsilon, alpha, gamma, environment):
     while mouse.pos != ending_pos:
         i+= 1
         action = choose_action_greedy(epsilon, mouse)
+        # action = 1
         reward,newstate = get_reward_and_newstate(mouse,action, environment)
         tot_reward += reward
         # TODO: UPDATE ESTIMATION
-        mouse.actionvalues[action] [mouse.pos[1]][mouse.pos[0]]+= alpha * (
-            reward + gamma * mouse.actionvalues[newstate[0]][newstate[1]][action] -
-            mouse.actionvalues[mouse.pos[0], mouse.pos[1], action])
+        action = 1
+        mouse.actionvalues[action][mouse.pos[1]][mouse.pos[0]]+= alpha * (
+            reward + gamma * mouse.actionvalues[action][newstate[1]][newstate[0]] -
+            mouse.actionvalues[action][mouse.pos[1]][mouse.pos[0]])
         # TODO: CHECK IF ON CLIFF
         if 1 <= newstate[0] <= 11 and newstate[1] == 3:
             mouse.pos = [0,3]
@@ -60,17 +62,17 @@ def Qlearning(mouse, ending_pos, epsilon, alpha, gamma, environment):
 def get_reward_and_newstate(mouse, action, environment):
     reward = 0
     if action == 0:  # move up
-        reward = environment[mouse.pos[0]][mouse.pos[1]-1]
-        newstate = [mouse.pos[0],mouse.pos[1]-1]
+        reward = environment[mouse.pos[0]-1][mouse.pos[1]]
+        newstate = [mouse.pos[0]-1,mouse.pos[1]]
     elif action == 1:
-        reward = environment[mouse.pos[0]+1][mouse.pos[1]]
-        newstate = [mouse.pos[0]+1, mouse.pos[1]]
-    elif action == 2:
         reward = environment[mouse.pos[0]][mouse.pos[1]+1]
         newstate = [mouse.pos[0], mouse.pos[1]+1]
+    elif action == 2:
+        reward = environment[mouse.pos[0]+1][mouse.pos[1]]
+        newstate = [mouse.pos[0]+1, mouse.pos[1]]
     elif action == 3:
-        reward = environment[mouse.pos[0]-1][mouse.pos[1]]
-        newstate = [mouse.pos[0]-1, mouse.pos[1]]
+        reward = environment[mouse.pos[0]][mouse.pos[1]-1]
+        newstate = [mouse.pos[0], mouse.pos[1]-1]
     return reward, newstate
 
 
@@ -100,17 +102,17 @@ def choose_action_greedy(epsilon, mouse):
 
 
 def find_possible_moves(curr_pos):
-    if curr_pos[0] == 0 and curr_pos[1] == 3:  # mouse pos = [0,3] i.e. starting pos poss moves are up or right
+    if curr_pos[0] == 3 and curr_pos[1] == 0:  # mouse pos = [0,3] i.e. starting pos poss moves are up or right
         return [0,1]
     elif curr_pos[0] == 0 and curr_pos[1] == 0:
         return [1,2]
-    elif curr_pos[0] == 12 and curr_pos[1] == 0:
+    elif curr_pos[0] == 0 and curr_pos[1] == 12:
         return [2,3]
-    elif curr_pos[0] == 0 and 1 <= curr_pos[1] <= 2:
+    elif curr_pos[0] == 2 and 1 <= curr_pos[1] <= 0:
         return [0,1,2]
-    elif curr_pos[0] == 12 and 1 <= curr_pos[1] <= 2:
+    elif curr_pos[1] == 12 and 1 <= curr_pos[0] <= 2:
         return [0,2,3]
-    elif curr_pos[1] == 0 and 1 <= curr_pos[0] <= 11:
+    elif curr_pos[0] == 0 and 1 <= curr_pos[1] <= 11:
         return [1,2,3]
     else:
         return [0,1,2,3]
@@ -130,6 +132,8 @@ def main():
     moves = initialise_moves()
     numEpi = 500
 
+    # test_array = np.ones(shape=(4,4))
+    # test = 123
     # test = np.ones(shape=(4,4,12),dtype = float)
     # test[0][2][0] = 0
     # answer = return_col_vals(test,0,2)
