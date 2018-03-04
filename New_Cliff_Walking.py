@@ -1,8 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import operator
 
-# environment
 
 class Mouse():
     def __init__(self):
@@ -28,13 +26,14 @@ def all_possible_moves():
     actionDestination[3][0][3] = [3,0]
     return actionDestination
 
+
 def Qlearning(mouse, epsilon, alpha, gamma, destination, ending_pos, rewards):
     tot_reward = 0.0
     i = 0
     while mouse.pos != ending_pos:
         # TODO: IN OTHER METHOD - HE DEFINES ALL POSSIBLE MOVES FROM BEFORE
         i+=1
-        action = choose_action_greedy(epsilon, mouse)
+        action = choose_action_greedy(epsilon, mouse, mouse.pos)
         reward = rewards[mouse.pos[0]][mouse.pos[1]][action]
         tot_reward += reward
         new_pos = destination[mouse.pos[0]][mouse.pos[1]][action]
@@ -42,30 +41,39 @@ def Qlearning(mouse, epsilon, alpha, gamma, destination, ending_pos, rewards):
             reward + gamma * np.max(mouse.actionvalues[new_pos[0], new_pos[1], :]) -
             mouse.actionvalues[mouse.pos[0], mouse.pos[1], action])
         mouse.pos = new_pos
-
     return tot_reward
 
+
 def SARSAlearning(mouse, epsilon, alpha, gamma, destination, ending_pos, rewards):
+    action_curr = choose_action_greedy(epsilon, mouse, mouse.pos)
+    tot_reward = 0
+    while mouse.pos != ending_pos:
+        state_new = destination[mouse.pos[0]][mouse.pos[1]][action_curr]
+        action_new = choose_action_greedy(epsilon, mouse, state_new)
+        reward = rewards[mouse.pos[0]][mouse.pos[1]][action_curr]
+        tot_reward += reward
+
+        mouse.actionvalues[mouse.pos[0]][mouse.pos[1]][action_curr] += alpha * (reward +
+                (gamma * mouse.actionvalues[state_new[0]][state_new[1]][action_new])
+                - mouse.actionvalues[mouse.pos[0]][mouse.pos[1]][action_curr])
+
+        action_curr = action_new
+        mouse.pos = state_new
+
+    return tot_reward
+# TODO CHECK THIS OUT
 
 
-def choose_action_greedy(epsilon, mouse):
+def choose_action_greedy(epsilon, mouse, state):
     rand_num = np.random.random()
-    vals = []
-    new_act_vals = np.zeros(shape=(4,2))
-    action = 0
     if rand_num > 1 - epsilon:
         return np.random.randint(4)
     else:
-        action_vals = mouse.actionvalues[mouse.pos[0]][mouse.pos[1]][:]
+        action_vals = mouse.actionvalues[state[0]][state[1]][:]
         action = np.random.choice(np.argwhere(action_vals == np.amax(action_vals)).flatten().tolist())
         return action
 
-    # TODO CHECK THIS OUT MAKE SURE IT WORKS
-
-        # if best_move == poss_moves
-
 def main():
-    #  TODO: define environment
     actionRewards = np.zeros(shape=(4, 12, 4),dtype=float)
     actionRewards[:, :, :] = -1.0
     actionRewards[2, 1:11, 1] = -100.0
@@ -74,8 +82,6 @@ def main():
     ending_pos = [3,11]
     alpha = 0.1
     gamma = 1
-    # initialise_rewards(environment)
-    # moves = initialise_moves()
     numSteps = 500
 
     destination = all_possible_moves()
@@ -89,16 +95,16 @@ def main():
             tot_reward_q = Qlearning(mouse_q, 0.1, alpha, gamma, destination, ending_pos, actionRewards)
             reward_q[i] += tot_reward_q
             mouse_q.pos = [3,0]
-            # print(tot_reward)
+
             tot_reward_sarsa = SARSAlearning(mouse_q, 0.1, alpha, gamma, destination, ending_pos, actionRewards)
             reward_sarsa[i] += tot_reward_sarsa
             mouse_sarsa.pos = [3,0]
 
     avg_reward_q = reward_q/10
-    avg_reward_sarsa = reward_sarsa/10
-
+    # avg_reward_sarsa = reward_sarsa/10
+    #
     plt.plot(avg_reward_q)
-    plt.plot(avg_reward_sarsa)
+    # plt.plot(avg_reward_sarsa)
     plt.show()
 
 
