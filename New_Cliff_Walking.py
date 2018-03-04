@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 
 class Mouse():
     def __init__(self):
-        # self.estimation = np.zeros(shape=(4,12,4), dtype= float)
         self.pos = [3,0]
         self.actionvalues = np.zeros(shape=(4,12,4),dtype = float)
 
@@ -29,10 +28,7 @@ def all_possible_moves():
 
 def Qlearning(mouse, epsilon, alpha, gamma, destination, ending_pos, rewards):
     tot_reward = 0.0
-    i = 0
     while mouse.pos != ending_pos:
-        # TODO: IN OTHER METHOD - HE DEFINES ALL POSSIBLE MOVES FROM BEFORE
-        i+=1
         action = choose_action_greedy(epsilon, mouse, mouse.pos)
         reward = rewards[mouse.pos[0]][mouse.pos[1]][action]
         tot_reward += reward
