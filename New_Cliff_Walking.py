@@ -52,16 +52,12 @@ def SARSAlearning(mouse, epsilon, alpha, gamma, destination, ending_pos, rewards
         action_new = choose_action_greedy(epsilon, mouse, state_new)
         reward = rewards[mouse.pos[0]][mouse.pos[1]][action_curr]
         tot_reward += reward
-
         mouse.actionvalues[mouse.pos[0]][mouse.pos[1]][action_curr] += alpha * (reward +
                 (gamma * mouse.actionvalues[state_new[0]][state_new[1]][action_new])
                 - mouse.actionvalues[mouse.pos[0]][mouse.pos[1]][action_curr])
-
         action_curr = action_new
         mouse.pos = state_new
-
     return tot_reward
-# TODO CHECK THIS OUT
 
 
 def choose_action_greedy(epsilon, mouse, state):
@@ -83,31 +79,68 @@ def main():
     alpha = 0.1
     gamma = 1
     numSteps = 500
+    numRuns = 10
+
+    small_epsi = 0.01
+    smallest_epsi = 0.0001
 
     destination = all_possible_moves()
 
     mouse_q = Mouse()
     mouse_sarsa = Mouse()
-    reward_q = np.zeros(500)
-    reward_sarsa = np.zeros(500)
-    for z in range(0,10):
+    mouse_s = Mouse()
+    mouse_ss = Mouse()
+
+    reward_q = np.zeros(numSteps)
+    reward_sarsa = np.zeros(numSteps)
+    reward_sarsa_s = np.zeros(numSteps)
+    reward_sarsa_ss = np.zeros(numSteps)
+
+    for z in range(0,numRuns):
         for i in range(0, numSteps):
             tot_reward_q = Qlearning(mouse_q, 0.1, alpha, gamma, destination, ending_pos, actionRewards)
             reward_q[i] += tot_reward_q
             mouse_q.pos = [3,0]
 
-            tot_reward_sarsa = SARSAlearning(mouse_q, 0.1, alpha, gamma, destination, ending_pos, actionRewards)
+            tot_reward_sarsa = SARSAlearning(mouse_sarsa, 0.1, alpha, gamma, destination, ending_pos, actionRewards)
             reward_sarsa[i] += tot_reward_sarsa
             mouse_sarsa.pos = [3,0]
 
-    avg_reward_q = reward_q/10
-    # avg_reward_sarsa = reward_sarsa/10
-    #
-    plt.plot(avg_reward_q)
-    # plt.plot(avg_reward_sarsa)
+            tot_reward_sarsa_s = SARSAlearning(mouse_s, small_epsi, alpha, gamma, destination, ending_pos,
+                                             actionRewards)
+            reward_sarsa_s[i] += tot_reward_sarsa_s
+            mouse_s.pos = [3, 0]
+
+            tot_reward_sarsa_ss = SARSAlearning(mouse_ss, smallest_epsi, alpha, gamma, destination, ending_pos,
+                                               actionRewards)
+            reward_sarsa_ss[i] += tot_reward_sarsa_ss
+            mouse_ss.pos = [3, 0]
+
+    reward_q /= numRuns
+    reward_sarsa /= numRuns
+    reward_sarsa_s /= numRuns
+    reward_sarsa_ss /= numRuns
+
+    smooth_rq = np.copy(reward_q)
+    smooth_rs = np.copy(reward_sarsa)
+    smooth_rss = np.copy(reward_sarsa_s)
+    smooth_rsss = np.copy(reward_sarsa_ss)
+
+    for i in range(numRuns, numSteps):
+        smooth_rs[i] = np.mean(reward_sarsa[i - numRuns: i + 1])
+        smooth_rq[i] = np.mean(reward_q[i - numRuns: i + 1])
+        smooth_rss[i] = np.mean(reward_sarsa_s[i - numRuns: i + 1])
+        smooth_rsss[i] = np.mean(reward_sarsa_ss[i - numRuns: i + 1])
+
+    plt.plot(smooth_rq, label='qlearning')
+    plt.plot(smooth_rs, label='sarsa 0.1 epsilon')
+    plt.plot(smooth_rss, label='sarsa 0.01 epsilon') # best at 0.01 epsilon
+    plt.plot(smooth_rsss, label='sarsa 0.0001 epsilon')
+    plt.ylim(-100,0)
+    plt.ylabel("Cumulive Reward Averaged Over 10 Runs")
+    plt.xlabel("Steps")
+    plt.legend()
     plt.show()
-
-
 
 if __name__ == '__main__':
     main()
