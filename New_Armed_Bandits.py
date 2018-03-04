@@ -2,14 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def epsilon_greedy(epsilon,est_values):
-    rand_num = np.random.random()
-    if epsilon > rand_num:
-        return np.random.randint(10)
-    else:
-        return np.argmax(est_values)
-
-
 def get_reward(action, arm_values):
     val1 = np.random.normal(0,1)
     reward = arm_values[0][action] + val1
