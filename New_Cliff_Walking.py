@@ -116,9 +116,13 @@ def main():
     mouse_sarsa = Mouse()
     mouse_s = Mouse()
     mouse_ss = Mouse()
+    mouse_q_new = Mouse()
+    mouse_q_newest = Mouse()
 
     # create arrays
     reward_q = np.zeros(numSteps)
+    reward_q_new = np.zeros(numSteps)
+    reward_q_newest = np.zeros(numSteps)
     reward_sarsa = np.zeros(numSteps)
     reward_sarsa_s = np.zeros(numSteps)
     reward_sarsa_ss = np.zeros(numSteps)
@@ -131,6 +135,14 @@ def main():
             tot_reward_q = Qlearning(mouse_q, 0.1, alpha, gamma, destination, ending_pos, actionRewards)
             reward_q[i] += tot_reward_q
             mouse_q.pos = [3,0]
+
+            tot_reward_q_new = Qlearning(mouse_q_new, small_epsi, alpha, gamma, destination, ending_pos, actionRewards)
+            reward_q_new[i] += tot_reward_q_new
+            mouse_q_new.pos = [3, 0]
+
+            tot_reward_q_newest = Qlearning(mouse_q_newest, smallest_epsi, alpha, gamma, destination, ending_pos, actionRewards)
+            reward_q_newest[i] += tot_reward_q_newest
+            mouse_q_newest.pos = [3, 0]
 
             tot_reward_sarsa = SARSAlearning(mouse_sarsa, 0.1, alpha, gamma, destination, ending_pos, actionRewards)
             reward_sarsa[i] += tot_reward_sarsa
@@ -151,11 +163,15 @@ def main():
     reward_sarsa /= numRuns
     reward_sarsa_s /= numRuns
     reward_sarsa_ss /= numRuns
+    reward_q_new /= numRuns
+    reward_q_newest /= numRuns
 
     smooth_rq = np.copy(reward_q)
     smooth_rs = np.copy(reward_sarsa)
     smooth_rss = np.copy(reward_sarsa_s)
     smooth_rsss = np.copy(reward_sarsa_ss)
+    smooth_rq_new = np.copy(reward_q_new)
+    smooth_rq_newest = np.copy(reward_q_newest)
 
     # perform moving average over last 19 episodes
     for i in range(numRuns, numSteps):
@@ -163,10 +179,19 @@ def main():
         smooth_rq[i] = np.mean(reward_q[i - numRuns: i + 1])
         smooth_rss[i] = np.mean(reward_sarsa_s[i - numRuns: i + 1])
         smooth_rsss[i] = np.mean(reward_sarsa_ss[i - numRuns: i + 1])
+        smooth_rq_new[i] = np.mean(reward_q_new[i - numRuns: i + 1])
+        smooth_rq_newest[i] = np.mean(reward_q_newest[i - numRuns: i + 1])
 
-    plt.plot(smooth_rq, label='qlearning')
+    plt.plot(smooth_rq, label='qlearning 0.1 epsilon')
+    plt.plot(smooth_rq_new, label='qlearning 0.01 epsilon')
+    plt.plot(smooth_rq_newest, label='qlearning 0.001 epsilon')
+    plt.ylabel("Cumulive Reward Averaged Over 10 Runs")
+    plt.xlabel("Steps")
+    plt.ylim(-100, 0)
+    plt.legend()
+    plt.show()
     plt.plot(smooth_rs, label='sarsa 0.1 epsilon')
-    plt.plot(smooth_rss, label='sarsa 0.01 epsilon') # best at 0.01 epsilon
+    plt.plot(smooth_rss, label='sarsa 0.01 epsilon')
     plt.plot(smooth_rsss, label='sarsa 0.0001 epsilon')
     plt.ylim(-100,0)
     plt.ylabel("Cumulive Reward Averaged Over 10 Runs")
